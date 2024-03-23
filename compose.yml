@@ -2,30 +2,25 @@ name: dc
 
 services:
   api:
-    image: golang:1.22
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
     volumes:
-      - type: bind
-        target: /go/src/app
-        source: ./api
-    working_dir: /go/src/app
-    command: 
-      - go
-      - run
-      - main.go
+      - ./api:/app
     ports:
-      - 8001:8090
-  fe:
+      - 8000:8000
+  ui:
     image: node:21
     volumes:
       - type: bind
         target: /src/app
-        source: ./fe
+        source: ./ui
     working_dir: /src/app
     command: 
       - npm
       - run
       - dev
     ports:
-      - 8000:8000
+      - 8001:8001
   cache:
     image: redis:7.2.4
