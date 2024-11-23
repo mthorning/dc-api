@@ -1,28 +1,44 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
+	"context"
+	"fmt"
+	"github.com/redis/go-redis/v9"
+	"net/http"
 )
 
-func hello(w http.ResponseWriter, req *http.Request) {
+var (
+        redisClient *redis.Client
+        ctx         = context.Background()
+)
 
-    fmt.Fprintf(w, "hello frens!\n")
+func index(w http.ResponseWriter, req *http.Request) {
+	val, err := redisClient.Get(ctx, "foo").Result()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "hello frens!\n foo: %s", val)
 }
 
-func headers(w http.ResponseWriter, req *http.Request) {
+func setRedisVal() {
+	ctx := context.Background()
 
-    for name, headers := range req.Header {
-        for _, h := range headers {
-            fmt.Fprintf(w, "%v: %v\n", name, h)
-        }
-    }
+	err := redisClient.Set(ctx, "foo", "bar", 0).Err()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
+        setRedisVal()
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
 
-    http.HandleFunc("/hello", hello)
-    http.HandleFunc("/headers", headers)
+	http.HandleFunc("/", index)
 
-    http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":8000", nil)
 }
